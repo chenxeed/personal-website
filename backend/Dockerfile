@@ -4,10 +4,8 @@ WORKDIR /app
 
 COPY ./package* .
 
-RUN npm install --unsafe-perm=true
+RUN npm ci --unsafe-perm=true
 
 COPY . .
-
-EXPOSE 3001
 
 CMD [ "npm", "run", "start:dev" ]

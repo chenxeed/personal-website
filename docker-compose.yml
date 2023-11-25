@@ -1,10 +1,10 @@
 version: '3'
 services:
-  frontend:
+  client:
     build:
-      context: ./frontend
+      context: ./client
     volumes:
-      - ./frontend/src:/frontend/src
+      - ./client/src:/client/src
     ports:
       - "3000:3000"
     depends_on:
@@ -40,7 +40,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - frontend
+      - client
       - backend
 
 volumes:
