@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './User/user.module';
+import { ConversationModule } from './Conversation/conversation.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserModule } from './User/user.module';
     }),
     // feature modules
     UserModule,
+    ConversationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
