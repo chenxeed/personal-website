@@ -16,15 +16,20 @@ export class ConversationService {
   async createConversation(body: {
     user: Types.ObjectId;
     message: string;
+    aiReply: string;
   }): Promise<Conversation> {
     const newChat = new this.chatModel({
       author: 'user',
       message: body.message,
     });
+    const newAIChat = new this.chatModel({
+      author: 'ai',
+      message: body.aiReply,
+    });
 
     const newConversation = new this.conversationModel({
       user: body.user,
-      chats: [newChat],
+      chats: [newChat, newAIChat],
     });
     const conversation = await newConversation.save();
     return conversation;
@@ -38,16 +43,21 @@ export class ConversationService {
   async appendConversationChat(body: {
     conversationId: string;
     message: string;
+    aiReply: string;
   }) {
     const newChat = new this.chatModel({
       author: 'user',
       message: body.message,
     });
+    const newAIChat = new this.chatModel({
+      author: 'ai',
+      message: body.aiReply,
+    });
     const conversation = await this.conversationModel.findByIdAndUpdate(
       body.conversationId,
       {
         $push: {
-          chats: newChat,
+          chats: { $each: [newChat, newAIChat] },
         },
       },
       { new: true },

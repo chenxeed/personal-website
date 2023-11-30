@@ -6,6 +6,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Chat, ChatSchema } from './chat.schema';
 import { Conversation, ConversationSchema } from './conversation.schema';
 import { User, UserSchema } from 'src/User/user.schema';
+import { EmbedderService } from 'src/Embedder/embedder.service';
+import { Source, SourceSchema } from 'src/Source/source.schema';
 
 @Module({
   imports: [
@@ -14,8 +16,9 @@ import { User, UserSchema } from 'src/User/user.schema';
       { name: Conversation.name, schema: ConversationSchema },
     ]),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    MongooseModule.forFeature([{ name: Source.name, schema: SourceSchema }]),
   ],
-  providers: [ConversationService, UserService],
+  providers: [ConversationService, UserService, EmbedderService],
   controllers: [ConversationController],
 })
 export class ConversationModule {}

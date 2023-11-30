@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -19,10 +20,15 @@ export class EmbedderController {
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async createEmbedDocument(@UploadedFile() file: Express.Multer.File) {
-    const embedder = await this.embedderService.createEmbedder({
+    const embedder = await this.embedderService.createSource({
       file,
     });
     return embedder;
+  }
+
+  @Delete('/sources/:sourceId')
+  async clearEmbedDocument(@Param('sourceId') sourceId: string) {
+    await this.embedderService.clearSource(sourceId);
   }
 
   @Get('/:searchText')
