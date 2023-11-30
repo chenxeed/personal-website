@@ -21,6 +21,7 @@ export class ConversationService {
       author: 'user',
       message: body.message,
     });
+
     const newConversation = new this.conversationModel({
       user: body.user,
       chats: [newChat],
