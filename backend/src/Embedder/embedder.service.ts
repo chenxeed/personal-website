@@ -16,7 +16,15 @@ import { Source } from 'src/Source/source.schema';
 import { Model } from 'mongoose';
 import { Conversation } from 'src/Conversation/conversation.schema';
 import { Chat } from 'src/Conversation/chat.schema';
+import {
+  DailyQuota,
+  DailyQuotaDocument,
+  MAX_DAILY_QUOTA,
+} from 'src/DailyQuota/daily-quota.schema';
 
+/**
+ * Get the collection from our connected AstraDB
+ */
 async function getCollectionDB() {
   const { DATASTAX_TOKEN, DATASTAX_API_ENDPOINT } = process.env;
   const db = new AstraDB(DATASTAX_TOKEN, DATASTAX_API_ENDPOINT);
@@ -34,6 +42,9 @@ async function getCollectionDB() {
   return col;
 }
 
+/**
+ * Get the embeddings vector from OpenAI API
+ */
 async function getTextVector(texts: string[]) {
   const embeddings = new OpenAIEmbeddings({
     openAIApiKey: process.env.OPENAI_API_KEY,
@@ -43,6 +54,14 @@ async function getTextVector(texts: string[]) {
   return vectors;
 }
 
+/**
+ * Based on the given search text, sources and previous chat,
+ * prompt the AI to generate the answer. The steps are:
+ * - Prepare the model, sources and the output schema (zodSchema)
+ * - Define the prompt template
+ * - Create the chain to link the prompt, model and the expected output
+ * - Call the chain with the input and generate the answer
+ */
 async function getAIAnswer(
   searchText: string,
   sources: string[],
@@ -99,7 +118,6 @@ async function getAIAnswer(
     llm: chatModel,
   });
 
-  console.log(sourcesText, chatHistoryText, searchText);
   const response = await chain.call({
     source: sourcesText,
     question: searchText,
@@ -112,6 +130,7 @@ async function getAIAnswer(
 export class EmbedderService {
   constructor(
     @InjectModel(Source.name) private sourceModel: Model<Source>,
+    @InjectModel(DailyQuota.name) private dailyQuotaModel: Model<DailyQuota>,
     @InjectModel(Conversation.name)
     private conversationModel: Model<Conversation>,
   ) {}
@@ -171,14 +190,36 @@ export class EmbedderService {
   }
 
   async getRelevantAnswer(searchText: string, conversationId?: string) {
-    const col = await getCollectionDB();
+    try {
+      // Check if the daily quota still available
+      const today = new Date().toISOString().split('T')[0];
+      let dailyQuota: DailyQuotaDocument | null;
+      dailyQuota = await this.dailyQuotaModel.findOne({
+        day: today,
+      });
+      if (dailyQuota === null) {
+        dailyQuota = new this.dailyQuotaModel({
+          day: today,
+          quota: 1,
+        });
+        await dailyQuota.save();
+      } else {
+        if (dailyQuota.quota >= MAX_DAILY_QUOTA) {
+          return 'Sorry, we have reached the daily quota. I need to limit the quota since I need to preserve the cost of the API usage. Please try again tomorrow!';
+        } else {
+          dailyQuota.quota += 1;
+          await dailyQuota.save();
+        }
+      }
 
-    // Convert the search text into embeddings vector
-    const [textVector] = await getTextVector([searchText]);
+      // Try to connect to the AstraDB for the vector
+      const col = await getCollectionDB();
 
-    // Search the DB for the most relevant answer
-    const result = (await col
-      .find(
+      // Convert the search text into embeddings vector
+      const [textVector] = await getTextVector([searchText]);
+
+      // Search the DB for the most relevant answer
+      const colQuery = await col.find(
         {},
         {
           sort: {
@@ -186,28 +227,38 @@ export class EmbedderService {
           },
           limit: 4,
         },
-      )
-      .toArray()) as { _id: string; text: string; $vector: number[] }[];
-
-    // Based on the search result, we'll generate the AI answer
-    let chatHistory: Chat[] | undefined;
-    if (conversationId) {
-      const conversation = await this.conversationModel.findById(
-        conversationId,
-        {
-          chats: {
-            $slice: -6,
-          },
-        },
       );
-      chatHistory = conversation.chats;
-    }
-    const aiAnswer = await getAIAnswer(
-      searchText,
-      result.map((r) => r.text),
-      chatHistory,
-    );
 
-    return aiAnswer.output.answer;
+      const result = (await colQuery.toArray()) as {
+        _id: string;
+        text: string;
+        $vector: number[];
+      }[];
+
+      // Based on the search result, we'll generate the AI answer
+      let chatHistory: Chat[] | undefined;
+      if (conversationId) {
+        const conversation = await this.conversationModel.findById(
+          conversationId,
+          {
+            chats: {
+              $slice: -6,
+            },
+          },
+        );
+        chatHistory = conversation.chats;
+      }
+      const aiAnswer = await getAIAnswer(
+        searchText,
+        result.map((r) => r.text),
+        chatHistory,
+      );
+
+      return aiAnswer.output.answer;
+    } catch (e) {
+      // TODO: Use logger instead of console
+      console.error('EmbedderService: Error while trying to answer', e);
+      return 'Sorry, something goes wrong while trying to answer you! Please try again later.';
+    }
   }
 }

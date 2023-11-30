@@ -3,9 +3,12 @@ import { HydratedDocument } from 'mongoose';
 
 export type SourceDocument = HydratedDocument<Source>;
 
-@Schema({ collection: 'sources', timestamps: true })
+@Schema({
+  collection: 'sources',
+  timestamps: { createdAt: true, updatedAt: false },
+})
 export class Source {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true })
   filename: string;
 }
 
