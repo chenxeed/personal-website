@@ -41,7 +41,7 @@ export default function Home() {
               </div>
               <div className="w-1/2 text-center">
                 <a
-                  href="https://linkedin.com/in/albert.chenx"
+                  href="https://linkedin.com/in/albertchenx"
                   target="_blank"
                   rel="noreferrer"
                 >
