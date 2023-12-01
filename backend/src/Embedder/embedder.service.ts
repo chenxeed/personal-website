@@ -28,18 +28,18 @@ import {
 async function getCollectionDB() {
   const { DATASTAX_TOKEN, DATASTAX_API_ENDPOINT } = process.env;
   const db = new AstraDB(DATASTAX_TOKEN, DATASTAX_API_ENDPOINT);
-  try {
+  const col = await db.collection('personal_vector');
+  if (col) {
+    return col;
+  } else {
     await db.createCollection('personal_vector', {
       vector: {
         dimension: 1536,
         metric: 'cosine',
-      },
+      } as any, // Current version of the library has wrong type annotation for `dimension`,
     });
-  } catch (e) {
-    console.log(e, 'collection already exists');
+    return await db.collection('personal_vector');
   }
-  const col = await db.collection('personal_vector');
-  return col;
 }
 
 /**
