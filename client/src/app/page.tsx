@@ -39,10 +39,19 @@ export default function Home() {
                   Github
                 </a>
               </div>
+              <div className="w-1/2 text-center">
+                <a
+                  href="https://linkedin.com/in/albert.chenx"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  LinkedIn
+                </a>
+              </div>
             </div>
           </div>
         </div>
-        <div className="h-[calc(100vh-400px)] lg:h-screen">
+        <div className="h-[calc(100dvh-400px)] lg:h-screen">
           <Chat />
         </div>
       </div>

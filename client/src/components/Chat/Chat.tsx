@@ -4,8 +4,8 @@ import Image from "next/image";
 import React, {
   FormEvent,
   FunctionComponent,
-  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -13,6 +13,8 @@ import React, {
 interface ChatProps {
   message: string;
 }
+
+const USER_CHAT_LIMIT = 5;
 
 const ChatAI: FunctionComponent<ChatProps> = ({ message }) => {
   return (
@@ -74,6 +76,14 @@ export const Chat = () => {
     { author: "ai" | "user"; message: string }[]
   >([]);
   const messageContainer = useRef<HTMLDivElement>(null);
+  const userChatCount = useMemo(
+    () => chats.filter(({ author }) => author === "user").length,
+    [chats]
+  );
+  const limitReached = useMemo(
+    () => userChatCount >= USER_CHAT_LIMIT && !isLoading,
+    [userChatCount, isLoading]
+  );
 
   useEffect(() => {
     const el = document.getElementById("messages");
@@ -84,7 +94,7 @@ export const Chat = () => {
     // After a short delay, show an automated message from AlbertAI
     setIsLoading(true);
     setTimeout(() => {
-      setChats((chats) => [
+      setChats([
         {
           author: "ai",
           message:
@@ -200,6 +210,11 @@ export const Chat = () => {
           );
         })}
         {isLoading && <ChatAI message="..." />}
+        {limitReached && (
+          <ChatAI
+            message={`Thank you for talking with me! You have reached the maximum quota of ${USER_CHAT_LIMIT} chats. I hope to see you again!`}
+          />
+        )}
       </div>
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
         <form className="flex" onSubmit={onSubmitMessage}>
@@ -207,13 +222,15 @@ export const Chat = () => {
             type="text"
             name="message"
             placeholder="Write your message!"
-            className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 bg-gray-200 rounded-md py-3"
+            maxLength={100}
+            className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 bg-gray-200 rounded-md py-3 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isLoading || limitReached}
           />
           <div className="items-center inset-y-0">
             <button
               type="submit"
-              disabled={isLoading}
-              className="inline-flex items-center justify-center rounded-lg px-4 py-3 ml-2 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
+              disabled={isLoading || limitReached}
+              className="inline-flex items-center justify-center rounded-lg px-4 py-3 ml-2 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             >
               <span className="hidden lg:inline font-bold">Send</span>
               <svg
