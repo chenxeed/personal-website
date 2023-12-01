@@ -40,7 +40,10 @@ export class ConversationController {
     @Param('id') id: string,
     @Body() body: CreateConversationInput,
   ) {
-    const aiReply = await this.embedderService.getRelevantAnswer(body.message);
+    const aiReply = await this.embedderService.getRelevantAnswer(
+      body.message,
+      id,
+    );
     await this.conversationService.appendConversationChat({
       ...body,
       conversationId: id,

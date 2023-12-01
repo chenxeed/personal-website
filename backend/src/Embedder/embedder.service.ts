@@ -55,6 +55,51 @@ async function getTextVector(texts: string[]) {
 }
 
 /**
+ * Refine the questions and answers from the given chat history
+ */
+async function getAIRefinedQuestion(searchText: string, lastChat: string) {
+  const chatModel = new ChatOpenAI({
+    openAIApiKey: process.env.OPENAI_API_KEY,
+    modelName: 'gpt-3.5-turbo',
+    temperature: 0.1,
+  });
+
+  const zodSchema = z.object({
+    refined: z.string().describe('Refined question'),
+  });
+
+  const currentDate = new Date().toISOString().split('T')[0];
+  const systemPrompt = `
+    Refine the provided question to align with the context established in the lastChat section, if present.
+    If the question pertains to the current time, ensure it is relevant to today's date, which is ${currentDate}.
+    For instance, transform a question like "Where are you working now?" into "Where are you working on ${currentDate}?" by integrating the current date appropriately.
+
+    question: ---{question}---
+    lastChat: ---{lastChat}---
+  `;
+
+  const humanMessagePrompt =
+    HumanMessagePromptTemplate.fromTemplate(systemPrompt);
+
+  const prompt = new ChatPromptTemplate({
+    promptMessages: [humanMessagePrompt],
+    inputVariables: ['question', 'lastChat'],
+  });
+
+  const chain = createStructuredOutputChainFromZod(zodSchema, {
+    prompt,
+    llm: chatModel,
+  });
+
+  const response = await chain.call({
+    question: searchText,
+    lastChat,
+  });
+
+  return response.output.refined;
+}
+
+/**
  * Based on the given search text, sources and previous chat,
  * prompt the AI to generate the answer. The steps are:
  * - Prepare the model, sources and the output schema (zodSchema)
@@ -65,7 +110,7 @@ async function getTextVector(texts: string[]) {
 async function getAIAnswer(
   searchText: string,
   sources: string[],
-  chatHistory?: { author: 'ai' | 'user'; message: string }[],
+  chatHistoryText: string,
 ) {
   const chatModel = new ChatOpenAI({
     openAIApiKey: process.env.OPENAI_API_KEY,
@@ -74,14 +119,6 @@ async function getAIAnswer(
   });
 
   const sourcesText = sources.join('\n');
-  const chatHistoryText = chatHistory?.reduce((chatText, chat) => {
-    if (chat.author === 'ai') {
-      chatText += `Albert: ${chat.message}\n`;
-    } else {
-      chatText += `You: ${chat.message}\n`;
-    }
-    return chatText + chat.message + '\n';
-  }, '');
   const zodSchema = z.object({
     answer: z.string().describe('Answer to the question'),
   });
@@ -93,16 +130,16 @@ async function getAIAnswer(
     1. Comprehend \`question\` delimited by triple dashes and craft a well-structured answer incorporating the \`source\` delimited by triple dashes.
     2. The answer should be grammatically correct, short, and precise. No additional information should be included.
     3. Do not answer any question that is sensitive, racial, personal, or political questions.
-    4. If the user asks about personal information, family, or any other information that is not related to the professional career, you must answer with "Sorry, I can't answer that question. You may contact the real Albert directly for more information.".
+    4. If the user asks about friends, family, or any other information that is not related to the work or professional career, you must answer with "Sorry, I can't answer that question. You may contact the real Albert directly for more information."
     ${
-      chatHistory
-        ? `5. Follow-up the answer if related to previous \`chatHistory\` delimited by triple dashes`
+      chatHistoryText
+        ? '5. Follow-up the answer if related to previous `chatHistory` delimited by triple dashes'
         : ''
     }
     
     source: ---{source}---
     question: ---{question}---
-    ${chatHistory ? `chat history: ---{chatHistory}---` : ''}
+    ${chatHistoryText ? `chatHistory: ---{chatHistory}---` : ''}
   `;
 
   const humanMessagePrompt =
@@ -110,7 +147,11 @@ async function getAIAnswer(
 
   const prompt = new ChatPromptTemplate({
     promptMessages: [humanMessagePrompt],
-    inputVariables: ['source', 'question'],
+    inputVariables: [
+      'source',
+      'question',
+      ...(chatHistoryText ? ['chatHistory'] : []),
+    ],
   });
 
   const chain = createStructuredOutputChainFromZod(zodSchema, {
@@ -140,6 +181,7 @@ export class EmbedderService {
     await col.deleteMany({
       sourceId,
     });
+    await this.sourceModel.deleteOne({ _id: sourceId });
   }
 
   async createSource(body: { file: Express.Multer.File }) {
@@ -215,8 +257,38 @@ export class EmbedderService {
       // Try to connect to the AstraDB for the vector
       const col = await getCollectionDB();
 
+      // Get the last chat history
+      let chatHistory: Chat[] | undefined;
+      if (conversationId) {
+        const conversation = await this.conversationModel.findById(
+          conversationId,
+          {
+            chats: {
+              $slice: -2,
+            },
+          },
+        );
+        chatHistory = conversation.chats;
+      }
+
+      // Wrap the chat history into a single string conversation
+      const chatHistoryText = chatHistory?.reduce((chatText, chat) => {
+        if (chat.author === 'ai') {
+          chatText += `Albert: ${chat.message}\n`;
+        } else {
+          chatText += `You: ${chat.message}\n`;
+        }
+        return chatText;
+      }, '');
+
+      // Refine the question
+      const refinedQuestion = await getAIRefinedQuestion(
+        searchText,
+        chatHistoryText,
+      );
+
       // Convert the search text into embeddings vector
-      const [textVector] = await getTextVector([searchText]);
+      const [textVector] = await getTextVector([refinedQuestion]);
 
       // Search the DB for the most relevant answer
       const colQuery = await col.find(
@@ -235,23 +307,10 @@ export class EmbedderService {
         $vector: number[];
       }[];
 
-      // Based on the search result, we'll generate the AI answer
-      let chatHistory: Chat[] | undefined;
-      if (conversationId) {
-        const conversation = await this.conversationModel.findById(
-          conversationId,
-          {
-            chats: {
-              $slice: -6,
-            },
-          },
-        );
-        chatHistory = conversation.chats;
-      }
       const aiAnswer = await getAIAnswer(
         searchText,
         result.map((r) => r.text),
-        chatHistory,
+        chatHistoryText,
       );
 
       return aiAnswer.output.answer;
