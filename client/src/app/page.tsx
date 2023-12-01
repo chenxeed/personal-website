@@ -1,7 +1,15 @@
 "use client";
 
 import Chat from "@/components/Chat";
-import { DotLottiePlayer } from "@dotlottie/react-player";
+import Script from "next/script";
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      "dotlottie-player": React.DetailedHTMLProps<any, any>;
+    }
+  }
+}
 
 export default function Home() {
   return (
@@ -10,7 +18,11 @@ export default function Home() {
         <div className="bg-gray-200 font-sans h-[400px] lg:h-screen w-full flex flex-row justify-center items-center">
           <div className="card w-full lg:w-96 mx-auto mt-[70px] lg:px-2 bg-white shadow-xl hover:shadow">
             <div className="w-32 h-32 mx-auto -mt-20">
-              <DotLottiePlayer
+              <Script
+                type="module"
+                src="https://unpkg.com/@dotlottie/player-component@2.3.0/dist/dotlottie-player.mjs"
+              ></Script>
+              <dotlottie-player
                 autoplay
                 loop
                 src="/devcoding.lottie"
