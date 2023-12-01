@@ -72,6 +72,7 @@ const ChatHuman: FunctionComponent<ChatProps> = ({ message }) => {
 export const Chat = () => {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
   const [chats, setChats] = useState<
     { author: "ai" | "user"; message: string }[]
   >([]);
@@ -105,6 +106,14 @@ export const Chat = () => {
     }, 2000);
   }, []);
 
+  // Scroll to bottom when new message is added
+  useEffect(() => {
+    if (messageContainer.current) {
+      messageContainer.current.scrollTop =
+        messageContainer.current.scrollHeight;
+    }
+  }, [chats, isLoading, isFailed]);
+
   const onSubmitMessage = (e: FormEvent) => {
     e.preventDefault();
 
@@ -119,13 +128,7 @@ export const Chat = () => {
 
     setChats([...chats, { author: "user", message }]);
     setIsLoading(true);
-
-    function onAppendMessage() {
-      if (messageContainer.current) {
-        messageContainer.current.scrollTop =
-          messageContainer.current.scrollHeight;
-      }
-    }
+    setIsFailed(false);
 
     formData.reset();
 
@@ -147,7 +150,10 @@ export const Chat = () => {
             { author: "ai", message: res.aiReply },
           ]);
           setIsLoading(false);
-          onAppendMessage();
+        })
+        .catch(() => {
+          setIsFailed(true);
+          setIsLoading(false);
         });
     } else {
       fetch(`/api/v1/conversations/${conversationId}`, {
@@ -166,7 +172,10 @@ export const Chat = () => {
             { author: "ai", message: res.aiReply },
           ]);
           setIsLoading(false);
-          onAppendMessage();
+        })
+        .catch(() => {
+          setIsFailed(true);
+          setIsLoading(false);
         });
     }
   };
@@ -213,6 +222,11 @@ export const Chat = () => {
         {limitReached && (
           <ChatAI
             message={`Thank you for talking with me! You have reached the maximum quota of ${USER_CHAT_LIMIT} chats. I hope to see you again!`}
+          />
+        )}
+        {isFailed && (
+          <ChatAI
+            message={`Sorry, I'm having trouble connecting to the server. Please try again later!`}
           />
         )}
       </div>
