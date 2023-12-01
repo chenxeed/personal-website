@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { CreateConversationInput } from './conversation.input';
 import { ConversationService } from './conversation.service';
-import { UserService } from '../User/user.service';
 import { EmbedderService } from 'src/Embedder/embedder.service';
 
 @Controller({
@@ -10,20 +9,16 @@ import { EmbedderService } from 'src/Embedder/embedder.service';
 })
 export class ConversationController {
   constructor(
-    private readonly userService: UserService,
     private readonly conversationService: ConversationService,
     private readonly embedderService: EmbedderService,
   ) {}
 
   @Post()
   async createConversation(@Body() body: CreateConversationInput) {
-    // TODO: remove this when we have authentication
-    const user = await this.userService.findUser('65669e9262814ba41fc9b8c3');
-
     const aiReply = await this.embedderService.getRelevantAnswer(body.message);
 
     const conversation = await this.conversationService.createConversation({
-      user: user._id,
+      user: '',
       message: body.message,
       aiReply,
     });

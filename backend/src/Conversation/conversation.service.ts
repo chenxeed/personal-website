@@ -1,4 +1,4 @@
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Conversation } from './conversation.schema';
@@ -14,7 +14,7 @@ export class ConversationService {
   ) {}
 
   async createConversation(body: {
-    user: Types.ObjectId;
+    user: string;
     message: string;
     aiReply: string;
   }): Promise<Conversation> {
