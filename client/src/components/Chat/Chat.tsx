@@ -6,6 +6,7 @@ import React, {
   FunctionComponent,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -72,72 +73,97 @@ export const Chat = () => {
   const [chats, setChats] = useState<
     { author: "ai" | "user"; message: string }[]
   >([]);
+  const messageContainer = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = document.getElementById("messages");
     if (el) {
       el.scrollTop = el.scrollHeight;
     }
+
+    // After a short delay, show an automated message from AlbertAI
+    setIsLoading(true);
+    setTimeout(() => {
+      setChats((chats) => [
+        {
+          author: "ai",
+          message:
+            "Hi, I'm Albert! I'm here to virtually assist you with your questions about me. How can I help you?",
+        },
+      ]);
+      setIsLoading(false);
+    }, 2000);
   }, []);
 
-  const onSubmitMessage = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      const formData = e.target as HTMLFormElement & {
-        message: { value: string };
-      };
-      const message = formData["message"].value;
+  const onSubmitMessage = (e: FormEvent) => {
+    e.preventDefault();
 
-      setChats([...chats, { author: "user", message }]);
-      setIsLoading(true);
+    if (isLoading) {
+      return;
+    }
 
-      formData.reset();
+    const formData = e.target as HTMLFormElement & {
+      message: { value: string };
+    };
+    const message = formData["message"].value;
 
-      if (!conversationId) {
-        fetch("/api/v1/conversations", {
-          method: "POST",
-          body: JSON.stringify({
-            message,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-          .then((res) => res.json())
-          .then((res) => {
-            setConversationId(res.conversation._id);
-            setChats((chats) => [
-              ...chats,
-              { author: "ai", message: res.aiReply },
-            ]);
-            setIsLoading(false);
-          });
-      } else {
-        fetch(`/api/v1/conversations/${conversationId}`, {
-          method: "PATCH",
-          body: JSON.stringify({
-            message,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-          .then((res) => res.json())
-          .then((res) => {
-            setChats((chats) => [
-              ...chats,
-              { author: "ai", message: res.aiReply },
-            ]);
-            setIsLoading(false);
-          });
+    setChats([...chats, { author: "user", message }]);
+    setIsLoading(true);
+
+    function onAppendMessage() {
+      if (messageContainer.current) {
+        messageContainer.current.scrollTop =
+          messageContainer.current.scrollHeight;
       }
-    },
-    [conversationId, chats]
-  );
+    }
+
+    formData.reset();
+
+    if (!conversationId) {
+      fetch("/api/v1/conversations", {
+        method: "POST",
+        body: JSON.stringify({
+          message,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          setConversationId(res.conversation._id);
+          setChats((chats) => [
+            ...chats,
+            { author: "ai", message: res.aiReply },
+          ]);
+          setIsLoading(false);
+          onAppendMessage();
+        });
+    } else {
+      fetch(`/api/v1/conversations/${conversationId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          message,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          setChats((chats) => [
+            ...chats,
+            { author: "ai", message: res.aiReply },
+          ]);
+          setIsLoading(false);
+          onAppendMessage();
+        });
+    }
+  };
 
   return (
-    <div className="flex-1 p:2 sm:p-6 justify-between flex flex-col h-screen">
-      <div className="flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
+    <div className="flex-1 p:2 sm:p-6 justify-between flex flex-col h-full">
+      <div className="hidden lg:flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
         <div className="relative flex items-center space-x-4">
           <div className="relative">
             <span className="absolute text-green-500 right-0 bottom-0">
@@ -162,8 +188,9 @@ export const Chat = () => {
         </div>
       </div>
       <div
+        ref={messageContainer}
         id="messages"
-        className="flex flex-col space-y-4 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
+        className="flex flex-col space-y-4 p-3 h-full overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
       >
         {chats.map((chat, index) => {
           return chat.author === "ai" ? (
@@ -175,19 +202,20 @@ export const Chat = () => {
         {isLoading && <ChatAI message="..." />}
       </div>
       <div className="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
-        <form className="relative flex" onSubmit={onSubmitMessage}>
+        <form className="flex" onSubmit={onSubmitMessage}>
           <input
             type="text"
             name="message"
             placeholder="Write your message!"
             className="w-full focus:outline-none focus:placeholder-gray-400 text-gray-600 placeholder-gray-600 pl-2 bg-gray-200 rounded-md py-3"
           />
-          <div className="absolute right-0 items-center inset-y-0 hidden sm:flex">
+          <div className="items-center inset-y-0">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-lg px-4 py-3 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
+              disabled={isLoading}
+              className="inline-flex items-center justify-center rounded-lg px-4 py-3 ml-2 transition duration-500 ease-in-out text-white bg-blue-500 hover:bg-blue-400 focus:outline-none"
             >
-              <span className="font-bold">Send</span>
+              <span className="hidden lg:inline font-bold">Send</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
