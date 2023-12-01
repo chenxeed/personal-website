@@ -93,7 +93,7 @@ async function getAIAnswer(
     1. Comprehend \`question\` delimited by triple dashes and craft a well-structured answer incorporating the \`source\` delimited by triple dashes.
     2. The answer should be grammatically correct, short, and precise. No additional information should be included.
     3. Do not answer any question that is sensitive, racial, personal, or political questions.
-    4. Return the answer in the JSON format.
+    4. If the user asks about personal information, family, or any other information that is not related to the professional career, you must answer with "Sorry, I can't answer that question. You may contact the real Albert directly for more information.".
     ${
       chatHistory
         ? `5. Follow-up the answer if related to previous \`chatHistory\` delimited by triple dashes`
