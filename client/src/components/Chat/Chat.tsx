@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import styles from "./chat.module.css";
 
 interface ChatProps {
   message: string;
@@ -22,7 +23,7 @@ const ChatAI: FunctionComponent<ChatProps> = ({ message }) => {
       <div className="flex items-end">
         <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-2 items-start">
           <div>
-            <span className="px-4 py-2 rounded-lg inline-block rounded-bl-none bg-gray-300 text-gray-600">
+            <span className="px-4 py-2 rounded-lg inline-block rounded-bl-none bg-gray-300 dark:bg-slate-700 text-gray-600 dark:text-slate-100">
               {message}
             </span>
           </div>
@@ -45,7 +46,7 @@ const ChatHuman: FunctionComponent<ChatProps> = ({ message }) => {
       <div className="flex items-end justify-end">
         <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-1 items-end">
           <div>
-            <span className="px-4 py-2 rounded-lg inline-block rounded-br-none bg-blue-600 text-white ">
+            <span className="px-4 py-2 rounded-lg inline-block rounded-br-none bg-blue-600 dark:bg-blue-200 text-white dark:text-black">
               {message}
             </span>
           </div>
@@ -181,7 +182,7 @@ export const Chat = () => {
   };
 
   return (
-    <div className="flex-1 p:2 sm:p-6 justify-between flex flex-col h-full">
+    <div className="flex-1 p:2 sm:p-6 justify-between flex flex-col h-full dark:bg-gray-900">
       <div className="hidden lg:flex sm:items-center justify-between py-3 border-b-2 border-gray-200">
         <div className="relative flex items-center space-x-4">
           <div className="relative">
@@ -200,16 +201,16 @@ export const Chat = () => {
           </div>
           <div className="flex flex-col leading-tight">
             <div className="text-2xl mt-1 flex items-center">
-              <span className="text-gray-700 mr-3">Albert Shintra</span>
+              <span className="mr-3">Albert Shintra</span>
             </div>
-            <span className="text-lg text-gray-600">Software Engineer</span>
+            <span className="text-lg ">Software Engineer</span>
           </div>
         </div>
       </div>
       <div
         ref={messageContainer}
         id="messages"
-        className="flex flex-col space-y-4 p-3 h-full overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
+        className={`flex flex-col space-y-4 p-3 h-full overflow-y-auto ${styles["scrollbar-thumb-blue"]} ${styles["scrollbar-thumb-rounded"]} ${styles["scrollbar-track-blue-lighter"]} ${styles["scrollbar-w-2"]} scrolling-touch`}
       >
         {chats.map((chat, index) => {
           return chat.author === "ai" ? (
