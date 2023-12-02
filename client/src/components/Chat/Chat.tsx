@@ -100,7 +100,7 @@ export const Chat = () => {
         {
           author: "ai",
           message:
-            "Hi, I'm Albert! I'm here to virtually assist you with your questions about me. How can I help you?",
+            "Hi, I'm Albert! I'm here to virtually assist your questions about me. What do you want to ask?",
         },
       ]);
       setIsLoading(false);

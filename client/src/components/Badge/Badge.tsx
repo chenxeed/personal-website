@@ -18,8 +18,6 @@ export const Badge = () => {
       <div className="text-center mt-2 text-3xl font-medium">
         Albert Mulia Shintra
       </div>
-      <div className="text-center mt-2 font-light text-sm">@chenxeed</div>
-      <div className="text-center font-normal text-lg">Indonesia</div>
       <div className="px-6 text-center mt-2 font-light text-sm">
         <p>
           <span className="font-semibold">Software Engineer</span>
