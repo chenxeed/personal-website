@@ -10,6 +10,7 @@ import React, {
   useState,
 } from "react";
 import styles from "./chat.module.css";
+import { useLog } from "@/service/analytics";
 
 interface ChatProps {
   message: string;
@@ -71,6 +72,7 @@ const ChatHuman: FunctionComponent<ChatProps> = ({ message }) => {
 };
 
 export const Chat = () => {
+  const { log } = useLog();
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFailed, setIsFailed] = useState(false);
@@ -100,7 +102,7 @@ export const Chat = () => {
         {
           author: "ai",
           message:
-            "Hi, I'm Albert! I'm here to virtually assist your questions about me. What do you want to ask?",
+            "Hi, I'm Albert! I'm here to virtually assist your questions about me.",
         },
       ]);
       setIsLoading(false);
@@ -115,6 +117,12 @@ export const Chat = () => {
     }
   }, [chats, isLoading, isFailed]);
 
+  useEffect(() => {
+    if (limitReached) {
+      log("user chat limit reached", { userChatCount });
+    }
+  }, [limitReached, userChatCount]);
+
   const onSubmitMessage = (e: FormEvent) => {
     e.preventDefault();
 
@@ -126,6 +134,12 @@ export const Chat = () => {
       message: { value: string };
     };
     const message = formData["message"].value;
+
+    if (conversationId) {
+      log("continue message", message);
+    } else {
+      log("sending message", message);
+    }
 
     setChats([...chats, { author: "user", message }]);
     setIsLoading(true);
@@ -145,6 +159,11 @@ export const Chat = () => {
       })
         .then((res) => res.json())
         .then((res) => {
+          log("message replied", {
+            message,
+            reply: res.aiReply,
+            conversationId: res.conversation._id,
+          });
           setConversationId(res.conversation._id);
           setChats((chats) => [
             ...chats,
@@ -168,6 +187,11 @@ export const Chat = () => {
       })
         .then((res) => res.json())
         .then((res) => {
+          log("continuous message replied", {
+            message,
+            reply: res.aiReply,
+            conversationId: res.conversation._id,
+          });
           setChats((chats) => [
             ...chats,
             { author: "ai", message: res.aiReply },
