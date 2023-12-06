@@ -35,6 +35,8 @@ new LangChainTracer({
   client: client as any, // Unresolved TS error: Types have separate declarations of a private property 'apiKey'
 });
 
+const GPT_MODEL = 'gpt-3.5-turbo-1106';
+
 /**
  * Get the collection from our connected AstraDB
  */
@@ -73,7 +75,7 @@ async function getTextVector(texts: string[]) {
 async function getAIRefinedQuestion(searchText: string, lastChat: string) {
   const chatModel = new ChatOpenAI({
     openAIApiKey: process.env.OPENAI_API_KEY,
-    modelName: 'gpt-3.5-turbo',
+    modelName: GPT_MODEL,
     temperature: 0.1,
   });
 
@@ -120,14 +122,10 @@ async function getAIRefinedQuestion(searchText: string, lastChat: string) {
  * - Create the chain to link the prompt, model and the expected output
  * - Call the chain with the input and generate the answer
  */
-async function getAIAnswer(
-  searchText: string,
-  sources: string[],
-  chatHistoryText: string,
-) {
+async function getAIAnswer(searchText: string, sources: string[]) {
   const chatModel = new ChatOpenAI({
     openAIApiKey: process.env.OPENAI_API_KEY,
-    modelName: 'gpt-3.5-turbo',
+    modelName: GPT_MODEL,
     temperature: 0.1,
   });
 
@@ -136,6 +134,7 @@ async function getAIAnswer(
     answer: z.string().describe('Answer to the question'),
   });
 
+  const currentDate = new Date().toISOString().split('T')[0];
   const systemPrompt = `
   You are acting as Albert, and you will be providing information based on a specified source.
 
@@ -143,15 +142,10 @@ async function getAIAnswer(
     1. Comprehend \`question\` delimited by triple dashes and craft a well-structured answer incorporating the \`source\` delimited by triple dashes. Ensure the response is grammatically correct and precise.
     2. Do not answer any question that is sensitive, racial, personal, or political questions.
     3. If the question pertains to friends, family, or any other information not related to the specified source, respond with "Sorry, I can't answer that question. You may contact the real Albert directly for more information."
-    ${
-      chatHistoryText
-        ? '4. Maintain a record of the ongoing conversation using the variable `chatHistory` delimited by triple dashes and use it to contextually follow up with the previous discussion.'
-        : ''
-    }
+    4. Refer ${currentDate} as today's date in your response.
     
     source: ---{source}---
     question: ---{question}---
-    ${chatHistoryText ? `chatHistory: ---{chatHistory}---` : ''}
   `;
 
   const humanMessagePrompt =
@@ -159,11 +153,7 @@ async function getAIAnswer(
 
   const prompt = new ChatPromptTemplate({
     promptMessages: [humanMessagePrompt],
-    inputVariables: [
-      'source',
-      'question',
-      ...(chatHistoryText ? ['chatHistory'] : []),
-    ],
+    inputVariables: ['source', 'question'],
   });
 
   const chain = createStructuredOutputChainFromZod(zodSchema, {
@@ -174,7 +164,6 @@ async function getAIAnswer(
   const response = await chain.call({
     source: sourcesText,
     question: searchText,
-    chatHistory: chatHistoryText,
   });
 
   return response;
@@ -324,14 +313,13 @@ export class EmbedderService {
         textVector,
         result.map((row) => row.$vector),
         0.5,
-        8,
+        5,
       );
       const sortedResult = mmrVector.map((index) => result[index]);
 
       const aiAnswer = await getAIAnswer(
         refinedQuestion,
         sortedResult.map((r) => r.text),
-        chatHistoryText,
       );
 
       return aiAnswer.output.answer;
