@@ -171,7 +171,10 @@ export const Chat = () => {
           ]);
           setIsLoading(false);
         })
-        .catch(() => {
+        .catch((e) => {
+          log("first message failed", {
+            error: `${e}`,
+          });
           setIsFailed(true);
           setIsLoading(false);
         });
@@ -190,7 +193,7 @@ export const Chat = () => {
           log("continuous message replied", {
             message,
             reply: res.aiReply,
-            conversationId: res.conversation._id,
+            conversationId,
           });
           setChats((chats) => [
             ...chats,
@@ -198,7 +201,11 @@ export const Chat = () => {
           ]);
           setIsLoading(false);
         })
-        .catch(() => {
+        .catch((e) => {
+          log("continuous message failed", {
+            conversationId,
+            error: `${e}`,
+          });
           setIsFailed(true);
           setIsLoading(false);
         });

@@ -6,6 +6,8 @@ import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { AstraDB } from '@datastax/astra-db-ts';
 import { z } from 'zod';
+import { Client } from 'langsmith';
+import { LangChainTracer } from 'langchain/callbacks';
 import {
   HumanMessagePromptTemplate,
   ChatPromptTemplate,
@@ -22,6 +24,16 @@ import {
   DailyQuotaDocument,
   MAX_DAILY_QUOTA,
 } from 'src/DailyQuota/daily-quota.schema';
+
+const client = new Client({
+  apiUrl: process.env.LANGCHAIN_ENDPOINT,
+  apiKey: process.env.LANGCHAIN_API_KEY,
+});
+
+new LangChainTracer({
+  projectName: process.env.LANGCHAIN_PROJECT,
+  client: client as any, // Unresolved TS error: Types have separate declarations of a private property 'apiKey'
+});
 
 /**
  * Get the collection from our connected AstraDB
@@ -317,7 +329,7 @@ export class EmbedderService {
       const sortedResult = mmrVector.map((index) => result[index]);
 
       const aiAnswer = await getAIAnswer(
-        searchText,
+        refinedQuestion,
         sortedResult.map((r) => r.text),
         chatHistoryText,
       );
