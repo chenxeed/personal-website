@@ -10,4 +10,6 @@ WORKDIR /
 COPY . /client
 WORKDIR /client
 
-CMD npm run dev
+RUN chmod u+x ./start.sh
+
+CMD ./start.sh

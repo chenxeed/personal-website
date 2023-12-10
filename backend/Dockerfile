@@ -8,4 +8,6 @@ RUN npm ci --unsafe-perm=true
 
 COPY . .
 
-CMD [ "npm", "run", "start:dev" ]
+RUN chmod u+x ./start.sh
+
+CMD ./start.sh
