@@ -15,12 +15,14 @@ export class ConversationController {
 
   @Post()
   async createConversation(@Body() body: CreateConversationInput) {
-    const aiReply = await this.embedderService.getRelevantAnswer(body.message);
+    const { aiReply, refinedQuestion } =
+      await this.embedderService.getRelevantAnswer(body.message);
 
     const conversation = await this.conversationService.createConversation({
       user: '',
       message: body.message,
       aiReply,
+      refinedMessage: refinedQuestion,
     });
 
     return {
@@ -40,14 +42,13 @@ export class ConversationController {
     @Param('id') id: string,
     @Body() body: CreateConversationInput,
   ) {
-    const aiReply = await this.embedderService.getRelevantAnswer(
-      body.message,
-      id,
-    );
+    const { aiReply, refinedQuestion } =
+      await this.embedderService.getRelevantAnswer(body.message, id);
     await this.conversationService.appendConversationChat({
       ...body,
       conversationId: id,
       aiReply,
+      refinedQuestion,
     });
     return {
       aiReply,

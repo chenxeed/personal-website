@@ -9,6 +9,9 @@ export class Chat {
 
   @Prop({ required: true })
   author: 'ai' | 'user';
+
+  @Prop()
+  refinedMessage: string;
 }
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);

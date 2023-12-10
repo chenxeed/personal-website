@@ -17,10 +17,12 @@ export class ConversationService {
     user: string;
     message: string;
     aiReply: string;
+    refinedMessage?: string;
   }): Promise<Conversation> {
     const newChat = new this.chatModel({
       author: 'user',
       message: body.message,
+      refinedMessage: body.refinedMessage,
     });
     const newAIChat = new this.chatModel({
       author: 'ai',
@@ -44,10 +46,12 @@ export class ConversationService {
     conversationId: string;
     message: string;
     aiReply: string;
+    refinedQuestion: string;
   }) {
     const newChat = new this.chatModel({
       author: 'user',
       message: body.message,
+      refinedMessage: body.refinedQuestion,
     });
     const newAIChat = new this.chatModel({
       author: 'ai',

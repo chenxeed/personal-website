@@ -6,7 +6,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './User/user.module';
 import { ConversationModule } from './Conversation/conversation.module';
-import { EmbedderModule } from './Embedder/embedder.module';
 
 @Module({
   imports: [
@@ -18,7 +17,6 @@ import { EmbedderModule } from './Embedder/embedder.module';
     // feature modules
     UserModule,
     ConversationModule,
-    EmbedderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
