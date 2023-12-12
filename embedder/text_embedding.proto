@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+service TextToEmbedding {
+  rpc Convert (TextRequest) returns (EmbeddingResponse) {}
+}
+
+message TextRequest {
+  string text = 1;
+}
+
+message EmbeddingResponse {
+  repeated float embedding = 1;
+}

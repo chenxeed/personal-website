@@ -37,6 +37,13 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=node-boilerplate
 
+  embedder:
+    build: ./embedder/
+    volumes:
+      - ./embedder:/app
+    ports:
+      - '50051:50051'
+
   nginx:
     image: nginx:alpine
     volumes:
