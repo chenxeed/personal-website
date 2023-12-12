@@ -22,7 +22,7 @@ const ChatAI: FunctionComponent<ChatProps> = ({ message }) => {
   return (
     <div className="chat-message">
       <div className="flex items-end">
-        <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-2 items-start">
+        <div className="flex flex-col space-y-2 max-w-xs mx-2 order-2 items-start">
           <div>
             <span className="px-4 py-2 rounded-lg inline-block rounded-bl-none bg-gray-300 dark:bg-slate-700 text-gray-600 dark:text-slate-100">
               {message}
@@ -45,7 +45,7 @@ const ChatHuman: FunctionComponent<ChatProps> = ({ message }) => {
   return (
     <div className="chat-message">
       <div className="flex items-end justify-end">
-        <div className="flex flex-col space-y-2 text-xs max-w-xs mx-2 order-1 items-end">
+        <div className="flex flex-col space-y-2 max-w-xs mx-2 order-1 items-end">
           <div>
             <span className="px-4 py-2 rounded-lg inline-block rounded-br-none bg-blue-600 dark:bg-blue-200 text-white dark:text-black">
               {message}
@@ -231,8 +231,8 @@ export const Chat = () => {
             />
           </div>
           <div className="flex flex-col leading-tight">
-            <div className="text-2xl mt-1 flex items-center">
-              <span className="mr-3">Albert Shintra</span>
+            <div className="mt-1 flex items-center">
+              <span className="mr-3 text-2xl">Albert Shintra</span>
             </div>
             <span className="text-lg ">Software Engineer</span>
           </div>
@@ -241,7 +241,7 @@ export const Chat = () => {
       <div
         ref={messageContainer}
         id="messages"
-        className={`flex flex-col space-y-4 p-3 h-full overflow-y-auto ${styles["scrollbar-thumb-blue"]} ${styles["scrollbar-thumb-rounded"]} ${styles["scrollbar-track-blue-lighter"]} ${styles["scrollbar-w-2"]} scrolling-touch`}
+        className={`flex flex-col space-y-4 p-3 h-full overflow-y-auto text-lg ${styles["scrollbar-thumb-blue"]} ${styles["scrollbar-thumb-rounded"]} ${styles["scrollbar-track-blue-lighter"]} ${styles["scrollbar-w-2"]} scrolling-touch`}
       >
         {chats.map((chat, index) => {
           return chat.author === "ai" ? (
