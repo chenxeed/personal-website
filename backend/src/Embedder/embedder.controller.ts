@@ -1,7 +1,6 @@
 import {
   Controller,
   Delete,
-  Get,
   Param,
   Post,
   UploadedFile,
@@ -29,12 +28,5 @@ export class EmbedderController {
   @Delete('/sources/:sourceId')
   async clearEmbedDocument(@Param('sourceId') sourceId: string) {
     await this.embedderService.clearSource(sourceId);
-  }
-
-  @Get('/:searchText')
-  async getRelevantAnswer(@Param('searchText') searchText: string) {
-    const relevantAnswer =
-      await this.embedderService.getRelevantAnswer(searchText);
-    return relevantAnswer;
   }
 }
