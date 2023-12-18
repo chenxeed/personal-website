@@ -15,7 +15,7 @@ class TextToEmbeddingStub(object):
             channel: A grpc.Channel.
         """
         self.Convert = channel.unary_unary(
-                '/TextToEmbedding/Convert',
+                '/text_to_embedding.TextToEmbedding/Convert',
                 request_serializer=text__embedding__pb2.TextRequest.SerializeToString,
                 response_deserializer=text__embedding__pb2.EmbeddingResponse.FromString,
                 )
@@ -40,7 +40,7 @@ def add_TextToEmbeddingServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'TextToEmbedding', rpc_method_handlers)
+            'text_to_embedding.TextToEmbedding', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -59,7 +59,7 @@ class TextToEmbedding(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/TextToEmbedding/Convert',
+        return grpc.experimental.unary_unary(request, target, '/text_to_embedding.TextToEmbedding/Convert',
             text__embedding__pb2.TextRequest.SerializeToString,
             text__embedding__pb2.EmbeddingResponse.FromString,
             options, channel_credentials,

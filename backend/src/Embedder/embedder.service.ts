@@ -9,58 +9,125 @@ import { LangChainTracer } from 'langchain/callbacks';
 import { maximalMarginalRelevance } from 'langchain/util/math';
 import { InjectModel } from '@nestjs/mongoose';
 import { Source } from 'src/Source/source.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { captureException } from '@sentry/node';
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
+import { ProtoGrpcType } from './text_embedding';
+import { config as dotEnvConfig } from 'dotenv';
 
-const client = new Client({
+dotEnvConfig();
+
+interface Embedding {
+  text: string;
+  $vector: number[];
+  sourceId: Types.ObjectId;
+}
+
+/**
+ * Langchain Tracer for Langsmith
+ */
+const langchainClient = new Client({
   apiUrl: process.env.LANGCHAIN_ENDPOINT,
   apiKey: process.env.LANGCHAIN_API_KEY,
 });
 
 new LangChainTracer({
   projectName: process.env.LANGCHAIN_PROJECT,
-  client: client as any, // Unresolved TS error: Types have separate declarations of a private property 'apiKey'
+  client: langchainClient as any, // Unresolved TS error: Types have separate declarations of a private property 'apiKey'
 });
 
-const GPT_MODEL = 'text-embedding-ada-002';
+enum EmbeddingType {
+  GPT_EMBEDDING_ADA_002 = 'gpt-embedding-ada-002',
+  MINI_LM_L6_V2 = 'mini-lm-l6-v2',
+}
 
-/**
- * Get the collection from our connected AstraDB
- */
-async function getCollectionDB() {
-  const { DATASTAX_TOKEN, DATASTAX_API_ENDPOINT } = process.env;
-  const db = new AstraDB(DATASTAX_TOKEN, DATASTAX_API_ENDPOINT);
-  const col = await db.collection('personal_vector');
-  if (col) {
-    return col;
-  } else {
-    await db.createCollection('personal_vector', {
-      vector: {
-        dimension: 1536,
-        metric: 'cosine',
-      } as any, // Current version of the library has wrong type annotation for `dimension`,
-    });
-    return await db.collection('personal_vector');
+// Define the service definition
+const PROTO_PATH = __dirname + '/text_to_embedding/text_embedding.proto';
+const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
+  keepCase: true,
+  longs: String,
+  enums: String,
+  defaults: true,
+  oneofs: true,
+});
+const proto = (
+  grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType
+).text_to_embedding;
+
+// Create a new client instance
+const grpcClient = new proto.TextToEmbedding(
+  process.env.EMBEDDER_ENDPOINT,
+  grpc.credentials.createInsecure(),
+);
+
+async function getTextEmbedding(
+  texts: string[],
+  type: EmbeddingType,
+): Promise<number[][]> {
+  switch (type) {
+    case EmbeddingType.MINI_LM_L6_V2: {
+      return new Promise((resolve, reject) => {
+        grpcClient.Convert({ texts }, (err, response) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(response.embeddings.map((embedding) => embedding.value));
+          }
+        });
+      });
+      break;
+    }
+    case EmbeddingType.GPT_EMBEDDING_ADA_002:
+    default: {
+      const GPT_MODEL = 'text-embedding-ada-002';
+      const embeddings = new OpenAIEmbeddings({
+        openAIApiKey: process.env.OPENAI_API_KEY,
+        modelName: GPT_MODEL,
+      });
+      const vectors = await embeddings.embedDocuments(texts);
+      return vectors;
+    }
   }
 }
 
-/**
- * Get the embeddings vector from OpenAI API
- */
-async function getTextVector(texts: string[]) {
-  const embeddings = new OpenAIEmbeddings({
-    openAIApiKey: process.env.OPENAI_API_KEY,
-    modelName: GPT_MODEL,
-  });
-  const vectors = await embeddings.embedDocuments(texts);
-  return vectors;
+async function getEmbeddingDatabase(type: EmbeddingType) {
+  switch (type) {
+    case EmbeddingType.MINI_LM_L6_V2: {
+      return getCollectionDB('personal_vector_384', 384);
+    }
+    case EmbeddingType.GPT_EMBEDDING_ADA_002:
+    default: {
+      return getCollectionDB('personal_vector', 1536);
+    }
+  }
+}
+
+async function getCollectionDB(dbName: string, dimension: number) {
+  const { DATASTAX_TOKEN, DATASTAX_API_ENDPOINT } = process.env;
+  const db = new AstraDB(DATASTAX_TOKEN, DATASTAX_API_ENDPOINT);
+  const col = await db.collection(dbName);
+  if (col) {
+    return col;
+  } else {
+    await db.createCollection(dbName, {
+      vector: {
+        dimension,
+        metric: 'cosine',
+      } as any, // Current version of the library has wrong type annotation for `dimension`,
+    });
+    const col = await db.collection(dbName);
+    return col;
+  }
 }
 
 export class EmbedderService {
+  private embeddingType = EmbeddingType.GPT_EMBEDDING_ADA_002;
+
   constructor(@InjectModel(Source.name) private sourceModel: Model<Source>) {}
 
   async clearSource(sourceId: string) {
-    const col = await getCollectionDB();
+    const col = await getEmbeddingDatabase(this.embeddingType);
     await col.deleteMany({
       sourceId,
     });
@@ -68,14 +135,8 @@ export class EmbedderService {
   }
 
   async createSource(body: { file: Express.Multer.File }) {
-    // Create the source as the pointer of the vector
-    const source = new this.sourceModel({
-      filename: body.file.originalname,
-    });
-    const newSource = await source.save();
-
     // Save it to our Vector DB
-    const col = await getCollectionDB();
+    const col = await getEmbeddingDatabase(this.embeddingType);
 
     // Convert the file into Document
     const stream = Readable.from(body.file.buffer);
@@ -97,10 +158,19 @@ export class EmbedderService {
     const chunks = await splitter.splitText(texts);
 
     // Generate the embeddings for each chunk
-    const documentEmbeddings = await getTextVector(chunks);
+    const documentEmbeddings = await getTextEmbedding(
+      chunks,
+      this.embeddingType,
+    );
+
+    // Create the source as the pointer of the vector
+    const source = new this.sourceModel({
+      filename: body.file.originalname,
+    });
+    const newSource = await source.save();
 
     // Map the value to be saved into the DB
-    const dbRows = [];
+    const dbRows: Embedding[] = [];
     documentEmbeddings.forEach((vector: number[], index) => {
       dbRows.push({
         text: chunks[index],
@@ -117,10 +187,13 @@ export class EmbedderService {
   async getRelevantSources(searchText: string): Promise<string[]> {
     try {
       // Try to connect to the AstraDB for the vector
-      const col = await getCollectionDB();
+      const col = await getEmbeddingDatabase(this.embeddingType);
 
       // Convert the search text into embeddings vector
-      const [textVector] = await getTextVector([searchText]);
+      const [textVector] = await getTextEmbedding(
+        [searchText],
+        this.embeddingType,
+      );
 
       // Search the DB for the most relevant answer
       const colQuery = col.find(

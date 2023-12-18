@@ -17,6 +17,9 @@ import {
 } from 'src/DailyQuota/daily-quota.schema';
 import { captureException } from '@sentry/node';
 
+/**
+ * Langchain Tracer for Langsmith
+ */
 const client = new Client({
   apiUrl: process.env.LANGCHAIN_ENDPOINT,
   apiKey: process.env.LANGCHAIN_API_KEY,

@@ -10,8 +10,10 @@ class TextToEmbeddingServicer(text_embedding_pb2_grpc.TextToEmbeddingServicer):
         self.model = SentenceTransformer('all-MiniLM-L6-v2')
 
     def Convert(self, request, context):
-        embedding = self.model.encode(request.text)
-        return text_embedding_pb2.EmbeddingResponse(embedding=embedding)
+        embeddings_array = self.model.encode(request.texts)
+        embeddings_list = embeddings_array.tolist()
+        embeddings = [text_embedding_pb2.Embedding(value=e) for e in embeddings_list]
+        return text_embedding_pb2.EmbeddingResponse(embeddings=embeddings)
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
