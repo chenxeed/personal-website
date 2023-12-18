@@ -15,6 +15,7 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import { ProtoGrpcType } from './text_embedding';
 import { config as dotEnvConfig } from 'dotenv';
+import { ChromaClient, IncludeEnum } from 'chromadb';
 
 dotEnvConfig();
 
@@ -94,43 +95,126 @@ async function getTextEmbedding(
 async function getEmbeddingDatabase(type: EmbeddingType) {
   switch (type) {
     case EmbeddingType.MINI_LM_L6_V2: {
-      return getCollectionDB('personal_vector_384', 384);
+      return getChromaCollectionDB();
     }
     case EmbeddingType.GPT_EMBEDDING_ADA_002:
     default: {
-      return getCollectionDB('personal_vector', 1536);
+      return getDatastaxCollectionDB('personal_vector', 1536);
     }
   }
 }
 
-async function getCollectionDB(dbName: string, dimension: number) {
+interface GetCollectionDB {
+  insertMany: (data: Embedding[]) => Promise<any>;
+  find: (
+    vector: number[],
+    limit: number,
+  ) => Promise<Omit<Embedding, 'sourceId'>[]>;
+  deleteMany: (sourceId: string) => Promise<any>;
+}
+
+async function getChromaCollectionDB(): Promise<GetCollectionDB> {
+  const chromaClient = new ChromaClient({
+    path: `http://${process.env.CHROMA_ENDPOINT}`,
+  });
+  const collection = await chromaClient.getOrCreateCollection({
+    name: 'chroma_vector',
+  });
+  return {
+    insertMany: async (data: Embedding[]) => {
+      const dataDict = data.reduce(
+        (dict, row) => {
+          dict['ids'].push(crypto.randomUUID());
+          dict['$vector'].push(row.$vector);
+          dict['sourceId'].push({ sourceId: row.sourceId });
+          dict['text'].push(row.text);
+          return dict;
+        },
+        {
+          ids: [],
+          $vector: [],
+          text: [],
+          sourceId: [],
+        },
+      );
+      await collection.add({
+        ids: dataDict['ids'],
+        embeddings: dataDict['$vector'],
+        metadatas: dataDict['sourceId'],
+        documents: dataDict['text'],
+      });
+    },
+    find: async (vector, limit) => {
+      const columnarResult = await collection.query({
+        queryEmbeddings: [vector],
+        nResults: limit,
+        include: [IncludeEnum.Documents, IncludeEnum.Embeddings],
+      });
+      const rowResult = columnarResult.ids[0].map((_, i) => ({
+        $vector: columnarResult.embeddings[0][i],
+        text: columnarResult.documents[0][i],
+      }));
+      return rowResult;
+    },
+    deleteMany: async (sourceId: string) => {
+      await collection.delete({
+        where: {
+          sourceId,
+        },
+      });
+    },
+  };
+}
+
+async function getDatastaxCollectionDB(
+  dbName: string,
+  dimension: number,
+): Promise<GetCollectionDB> {
   const { DATASTAX_TOKEN, DATASTAX_API_ENDPOINT } = process.env;
   const db = new AstraDB(DATASTAX_TOKEN, DATASTAX_API_ENDPOINT);
-  const col = await db.collection(dbName);
-  if (col) {
-    return col;
-  } else {
+  let col = await db.collection(dbName);
+  if (!col) {
     await db.createCollection(dbName, {
       vector: {
         dimension,
         metric: 'cosine',
       } as any, // Current version of the library has wrong type annotation for `dimension`,
     });
-    const col = await db.collection(dbName);
-    return col;
+    col = await db.collection(dbName);
   }
+  return {
+    insertMany: async (data: Embedding[]) => col.insertMany(data),
+    find: async (vector: number[], limit: number) => {
+      const colQuery = col.find(
+        {},
+        {
+          sort: {
+            $vector: vector,
+          },
+          limit,
+        },
+      );
+      return (await colQuery.toArray()) as {
+        _id: string;
+        text: string;
+        $vector: number[];
+      }[];
+    },
+    deleteMany: async (sourceId: string) =>
+      col.deleteMany({
+        sourceId,
+      }),
+  };
 }
 
 export class EmbedderService {
-  private embeddingType = EmbeddingType.GPT_EMBEDDING_ADA_002;
+  private embeddingType = EmbeddingType.MINI_LM_L6_V2;
 
   constructor(@InjectModel(Source.name) private sourceModel: Model<Source>) {}
 
   async clearSource(sourceId: string) {
     const col = await getEmbeddingDatabase(this.embeddingType);
-    await col.deleteMany({
-      sourceId,
-    });
+    await col.deleteMany(sourceId);
     await this.sourceModel.deleteOne({ _id: sourceId });
   }
 
@@ -196,21 +280,7 @@ export class EmbedderService {
       );
 
       // Search the DB for the most relevant answer
-      const colQuery = col.find(
-        {},
-        {
-          sort: {
-            $vector: textVector,
-          },
-          limit: 8,
-        },
-      );
-
-      const result = (await colQuery.toArray()) as {
-        _id: string;
-        text: string;
-        $vector: number[];
-      }[];
+      const result = await col.find(textVector, 8);
 
       // Get the maximal marginal relevance to sort the result with both relevant and diverse answer
       const mmrVector = maximalMarginalRelevance(
@@ -220,6 +290,11 @@ export class EmbedderService {
         5,
       );
       const sortedResult = mmrVector.map((index) => result[index]);
+
+      console.log(
+        'sorted',
+        sortedResult.map((row) => row.text),
+      );
 
       return sortedResult.map((row) => row.text);
     } catch (e) {

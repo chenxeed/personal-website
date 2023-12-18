@@ -37,6 +37,13 @@ services:
     environment:
       - MONGO_INITDB_DATABASE=node-boilerplate
 
+  chroma:
+    image: chromadb/chroma:latest
+    ports:
+      - '8000:8000'
+    volumes:
+      - chromadata:/chroma/.chroma/index
+
   embedder:
     build: ./embedder/
     volumes:
@@ -56,3 +63,4 @@ services:
 
 volumes:
   dbdata:
+  chromadata:
