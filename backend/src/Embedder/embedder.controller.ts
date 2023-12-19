@@ -7,9 +7,11 @@ import {
   Post,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { EmbedderService, EmbeddingType } from './embedder.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller({
   path: 'embedder',
@@ -18,12 +20,14 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class EmbedderController {
   constructor(private readonly embedderService: EmbedderService) {}
 
+  @UseGuards(AuthGuard)
   @Get()
   async getEmbedDocuments() {
     const embedders = await this.embedderService.getSources();
     return embedders;
   }
 
+  @UseGuards(AuthGuard)
   @Post()
   @UseInterceptors(FileInterceptor('file'))
   async createEmbedDocument(
@@ -37,6 +41,7 @@ export class EmbedderController {
     return embedder;
   }
 
+  @UseGuards(AuthGuard)
   @Delete('/sources/:sourceId')
   async clearEmbedDocument(@Param('sourceId') sourceId: string) {
     await this.embedderService.clearSource(sourceId);

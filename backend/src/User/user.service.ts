@@ -24,6 +24,15 @@ export class UserService {
     return user;
   }
 
+  async findUserByEmail(email: string): Promise<UserDocument> {
+    const user = await this.userModel.findOne({ email }).exec();
+
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found `);
+    }
+    return user;
+  }
+
   async listUser(): Promise<UserPayload[]> {
     const users = await this.userModel.find();
     return users;

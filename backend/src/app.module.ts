@@ -7,6 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './User/user.module';
 import { ConversationModule } from './Conversation/conversation.module';
 import { EmbedderModule } from './Embedder/embedder.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { EmbedderModule } from './Embedder/embedder.module';
     UserModule,
     ConversationModule,
     EmbedderModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
