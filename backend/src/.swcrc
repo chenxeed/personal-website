@@ -1,0 +1,11 @@
+{
+  "module": {
+  "type": "commonjs",
+  "strict": false,
+  "strictMode": true,
+  "lazy": false,
+  "noInterop": true,
+  "ignoreDynamic": false
+  }
+ }
+ 
