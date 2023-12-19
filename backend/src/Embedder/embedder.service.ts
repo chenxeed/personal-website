@@ -38,7 +38,7 @@ new LangChainTracer({
   client: langchainClient as any, // Unresolved TS error: Types have separate declarations of a private property 'apiKey'
 });
 
-enum EmbeddingType {
+export enum EmbeddingType {
   GPT_EMBEDDING_ADA_002 = 'gpt-embedding-ada-002',
   MINI_LM_L6_V2 = 'mini-lm-l6-v2',
 }
@@ -115,7 +115,7 @@ interface GetCollectionDB {
 
 async function getChromaCollectionDB(): Promise<GetCollectionDB> {
   const chromaClient = new ChromaClient({
-    path: `http://${process.env.CHROMA_ENDPOINT}`,
+    path: process.env.CHROMA_ENDPOINT,
   });
   const collection = await chromaClient.getOrCreateCollection({
     name: 'chroma_vector',
@@ -208,7 +208,8 @@ async function getDatastaxCollectionDB(
 }
 
 export class EmbedderService {
-  private embeddingType = EmbeddingType.MINI_LM_L6_V2;
+  private embeddingType =
+    (process.env.EMBEDDER_TYPE as EmbeddingType) || EmbeddingType.MINI_LM_L6_V2;
 
   constructor(@InjectModel(Source.name) private sourceModel: Model<Source>) {}
 
@@ -218,9 +219,13 @@ export class EmbedderService {
     await this.sourceModel.deleteOne({ _id: sourceId });
   }
 
-  async createSource(body: { file: Express.Multer.File }) {
+  async createSource(body: {
+    file: Express.Multer.File;
+    type?: EmbeddingType;
+  }) {
+    const embeddingType = body.type || this.embeddingType;
     // Save it to our Vector DB
-    const col = await getEmbeddingDatabase(this.embeddingType);
+    const col = await getEmbeddingDatabase(embeddingType);
 
     // Convert the file into Document
     const stream = Readable.from(body.file.buffer);
@@ -242,10 +247,7 @@ export class EmbedderService {
     const chunks = await splitter.splitText(texts);
 
     // Generate the embeddings for each chunk
-    const documentEmbeddings = await getTextEmbedding(
-      chunks,
-      this.embeddingType,
-    );
+    const documentEmbeddings = await getTextEmbedding(chunks, embeddingType);
 
     // Create the source as the pointer of the vector
     const source = new this.sourceModel({
@@ -290,11 +292,6 @@ export class EmbedderService {
         5,
       );
       const sortedResult = mmrVector.map((index) => result[index]);
-
-      console.log(
-        'sorted',
-        sortedResult.map((row) => row.text),
-      );
 
       return sortedResult.map((row) => row.text);
     } catch (e) {

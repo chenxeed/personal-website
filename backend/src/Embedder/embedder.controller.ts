@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Param,
@@ -6,7 +7,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
-import { EmbedderService } from './embedder.service';
+import { EmbedderService, EmbeddingType } from './embedder.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller({
@@ -18,9 +19,13 @@ export class EmbedderController {
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))
-  async createEmbedDocument(@UploadedFile() file: Express.Multer.File) {
+  async createEmbedDocument(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('type') type: EmbeddingType,
+  ) {
     const embedder = await this.embedderService.createSource({
       file,
+      type,
     });
     return embedder;
   }
