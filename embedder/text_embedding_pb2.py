@@ -3,9 +3,9 @@
 # source: text_embedding.proto
 """Generated protocol buffer code."""
 from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-from google.protobuf import reflection as _reflection
+from google.protobuf import descriptor_pool as _descriptor_pool
 from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
@@ -13,165 +13,20 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor.FileDescriptor(
-  name='text_embedding.proto',
-  package='text_to_embedding',
-  syntax='proto3',
-  serialized_options=None,
-  create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x14text_embedding.proto\x12\x11text_to_embedding\"\x1c\n\x0bTextRequest\x12\r\n\x05texts\x18\x01 \x03(\t\"E\n\x11\x45mbeddingResponse\x12\x30\n\nembeddings\x18\x01 \x03(\x0b\x32\x1c.text_to_embedding.Embedding\"\x1a\n\tEmbedding\x12\r\n\x05value\x18\x01 \x03(\x02\x32\x64\n\x0fTextToEmbedding\x12Q\n\x07\x43onvert\x12\x1e.text_to_embedding.TextRequest\x1a$.text_to_embedding.EmbeddingResponse\"\x00\x62\x06proto3'
-)
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x14text_embedding.proto\x12\x11text_to_embedding\"\x1c\n\x0bTextRequest\x12\r\n\x05texts\x18\x01 \x03(\t\"E\n\x11\x45mbeddingResponse\x12\x30\n\nembeddings\x18\x01 \x03(\x0b\x32\x1c.text_to_embedding.Embedding\"\x1a\n\tEmbedding\x12\r\n\x05value\x18\x01 \x03(\x02\x32\x64\n\x0fTextToEmbedding\x12Q\n\x07\x43onvert\x12\x1e.text_to_embedding.TextRequest\x1a$.text_to_embedding.EmbeddingResponse\"\x00\x62\x06proto3')
 
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'text_embedding_pb2', _globals)
+if _descriptor._USE_C_DESCRIPTORS == False:
 
-
-
-_TEXTREQUEST = _descriptor.Descriptor(
-  name='TextRequest',
-  full_name='text_to_embedding.TextRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='texts', full_name='text_to_embedding.TextRequest.texts', index=0,
-      number=1, type=9, cpp_type=9, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=43,
-  serialized_end=71,
-)
-
-
-_EMBEDDINGRESPONSE = _descriptor.Descriptor(
-  name='EmbeddingResponse',
-  full_name='text_to_embedding.EmbeddingResponse',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='embeddings', full_name='text_to_embedding.EmbeddingResponse.embeddings', index=0,
-      number=1, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=73,
-  serialized_end=142,
-)
-
-
-_EMBEDDING = _descriptor.Descriptor(
-  name='Embedding',
-  full_name='text_to_embedding.Embedding',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  create_key=_descriptor._internal_create_key,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='value', full_name='text_to_embedding.Embedding.value', index=0,
-      number=1, type=2, cpp_type=6, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=144,
-  serialized_end=170,
-)
-
-_EMBEDDINGRESPONSE.fields_by_name['embeddings'].message_type = _EMBEDDING
-DESCRIPTOR.message_types_by_name['TextRequest'] = _TEXTREQUEST
-DESCRIPTOR.message_types_by_name['EmbeddingResponse'] = _EMBEDDINGRESPONSE
-DESCRIPTOR.message_types_by_name['Embedding'] = _EMBEDDING
-_sym_db.RegisterFileDescriptor(DESCRIPTOR)
-
-TextRequest = _reflection.GeneratedProtocolMessageType('TextRequest', (_message.Message,), {
-  'DESCRIPTOR' : _TEXTREQUEST,
-  '__module__' : 'text_embedding_pb2'
-  # @@protoc_insertion_point(class_scope:text_to_embedding.TextRequest)
-  })
-_sym_db.RegisterMessage(TextRequest)
-
-EmbeddingResponse = _reflection.GeneratedProtocolMessageType('EmbeddingResponse', (_message.Message,), {
-  'DESCRIPTOR' : _EMBEDDINGRESPONSE,
-  '__module__' : 'text_embedding_pb2'
-  # @@protoc_insertion_point(class_scope:text_to_embedding.EmbeddingResponse)
-  })
-_sym_db.RegisterMessage(EmbeddingResponse)
-
-Embedding = _reflection.GeneratedProtocolMessageType('Embedding', (_message.Message,), {
-  'DESCRIPTOR' : _EMBEDDING,
-  '__module__' : 'text_embedding_pb2'
-  # @@protoc_insertion_point(class_scope:text_to_embedding.Embedding)
-  })
-_sym_db.RegisterMessage(Embedding)
-
-
-
-_TEXTTOEMBEDDING = _descriptor.ServiceDescriptor(
-  name='TextToEmbedding',
-  full_name='text_to_embedding.TextToEmbedding',
-  file=DESCRIPTOR,
-  index=0,
-  serialized_options=None,
-  create_key=_descriptor._internal_create_key,
-  serialized_start=172,
-  serialized_end=272,
-  methods=[
-  _descriptor.MethodDescriptor(
-    name='Convert',
-    full_name='text_to_embedding.TextToEmbedding.Convert',
-    index=0,
-    containing_service=None,
-    input_type=_TEXTREQUEST,
-    output_type=_EMBEDDINGRESPONSE,
-    serialized_options=None,
-    create_key=_descriptor._internal_create_key,
-  ),
-])
-_sym_db.RegisterServiceDescriptor(_TEXTTOEMBEDDING)
-
-DESCRIPTOR.services_by_name['TextToEmbedding'] = _TEXTTOEMBEDDING
-
+  DESCRIPTOR._options = None
+  _globals['_TEXTREQUEST']._serialized_start=43
+  _globals['_TEXTREQUEST']._serialized_end=71
+  _globals['_EMBEDDINGRESPONSE']._serialized_start=73
+  _globals['_EMBEDDINGRESPONSE']._serialized_end=142
+  _globals['_EMBEDDING']._serialized_start=144
+  _globals['_EMBEDDING']._serialized_end=170
+  _globals['_TEXTTOEMBEDDING']._serialized_start=172
+  _globals['_TEXTTOEMBEDDING']._serialized_end=272
 # @@protoc_insertion_point(module_scope)

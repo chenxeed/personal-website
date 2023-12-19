@@ -1,17 +1,16 @@
 import grpc
 from concurrent import futures
 import time
-from sentence_transformers import SentenceTransformer
-import text_embedding_pb2_grpc  # Replace with your actual module name
-import text_embedding_pb2  # Replace with your actual module name
+import text_embedding_pb2_grpc
+import text_embedding_pb2
+from chromadb.utils import embedding_functions
 
 class TextToEmbeddingServicer(text_embedding_pb2_grpc.TextToEmbeddingServicer):
     def __init__(self):
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.default_ef = embedding_functions.DefaultEmbeddingFunction()
 
     def Convert(self, request, context):
-        embeddings_array = self.model.encode(request.texts)
-        embeddings_list = embeddings_array.tolist()
+        embeddings_list = self.default_ef(request.texts)
         embeddings = [text_embedding_pb2.Embedding(value=e) for e in embeddings_list]
         return text_embedding_pb2.EmbeddingResponse(embeddings=embeddings)
 

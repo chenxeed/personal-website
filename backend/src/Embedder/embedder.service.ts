@@ -209,7 +209,8 @@ async function getDatastaxCollectionDB(
 
 export class EmbedderService {
   private embeddingType =
-    (process.env.EMBEDDER_TYPE as EmbeddingType) || EmbeddingType.MINI_LM_L6_V2;
+    (process.env.EMBEDDER_TYPE as EmbeddingType) ||
+    EmbeddingType.GPT_EMBEDDING_ADA_002;
 
   constructor(@InjectModel(Source.name) private sourceModel: Model<Source>) {}
 
