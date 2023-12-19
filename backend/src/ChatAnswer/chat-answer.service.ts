@@ -9,12 +9,12 @@ import {
 import { createStructuredOutputChainFromZod } from 'langchain/chains/openai_functions';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Conversation } from 'src/Conversation/conversation.schema';
+import { Conversation } from '../Conversation/conversation.schema';
 import {
   DailyQuota,
   DailyQuotaDocument,
   MAX_DAILY_QUOTA,
-} from 'src/DailyQuota/daily-quota.schema';
+} from '../DailyQuota/daily-quota.schema';
 import { captureException } from '@sentry/node';
 
 /**

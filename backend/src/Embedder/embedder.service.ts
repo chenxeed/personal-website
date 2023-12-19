@@ -8,7 +8,7 @@ import { Client } from 'langsmith';
 import { LangChainTracer } from 'langchain/callbacks';
 import { maximalMarginalRelevance } from 'langchain/util/math';
 import { InjectModel } from '@nestjs/mongoose';
-import { Source } from 'src/Source/source.schema';
+import { Source } from '../Source/source.schema';
 import { Model, Types } from 'mongoose';
 import { captureException } from '@sentry/node';
 import * as grpc from '@grpc/grpc-js';

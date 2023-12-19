@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { EmbedderService } from './embedder.service';
 import { EmbedderController } from './embedder.controller';
-import { Source, SourceSchema } from 'src/Source/source.schema';
+import { Source, SourceSchema } from '../Source/source.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({

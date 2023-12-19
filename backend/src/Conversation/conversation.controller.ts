@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { CreateConversationInput } from './conversation.input';
 import { ConversationService } from './conversation.service';
-import { EmbedderService } from 'src/Embedder/embedder.service';
-import { ChatAnswerService } from 'src/ChatAnswer/chat-answer.service';
+import { EmbedderService } from '../Embedder/embedder.service';
+import { ChatAnswerService } from '../ChatAnswer/chat-answer.service';
 
 @Controller({
   path: 'conversations',

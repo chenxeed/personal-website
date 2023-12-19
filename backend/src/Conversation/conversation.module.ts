@@ -5,14 +5,11 @@ import { UserService } from '../User/user.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Chat, ChatSchema } from './chat.schema';
 import { Conversation, ConversationSchema } from './conversation.schema';
-import { User, UserSchema } from 'src/User/user.schema';
-import { EmbedderService } from 'src/Embedder/embedder.service';
-import { ChatAnswerService } from 'src/ChatAnswer/chat-answer.service';
-import { Source, SourceSchema } from 'src/Source/source.schema';
-import {
-  DailyQuota,
-  DailyQuotaSchema,
-} from 'src/DailyQuota/daily-quota.schema';
+import { User, UserSchema } from '../User/user.schema';
+import { EmbedderService } from '../Embedder/embedder.service';
+import { ChatAnswerService } from '../ChatAnswer/chat-answer.service';
+import { Source, SourceSchema } from '../Source/source.schema';
+import { DailyQuota, DailyQuotaSchema } from '../DailyQuota/daily-quota.schema';
 
 @Module({
   imports: [

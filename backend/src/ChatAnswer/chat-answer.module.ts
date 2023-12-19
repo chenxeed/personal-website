@@ -4,11 +4,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   Conversation,
   ConversationSchema,
-} from 'src/Conversation/conversation.schema';
-import {
-  DailyQuota,
-  DailyQuotaSchema,
-} from 'src/DailyQuota/daily-quota.schema';
+} from '../Conversation/conversation.schema';
+import { DailyQuota, DailyQuotaSchema } from '../DailyQuota/daily-quota.schema';
 
 @Module({
   imports: [
