@@ -86,6 +86,9 @@ export default function Admin() {
     fetch("/api/v1/embedder", {
       method: "POST",
       body: formData,
+      headers: {
+        Authorization: `Bearer ${loginToken}`,
+      },
     })
       .then(() => {
         refetch();
