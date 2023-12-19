@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   UploadedFile,
@@ -16,6 +17,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 })
 export class EmbedderController {
   constructor(private readonly embedderService: EmbedderService) {}
+
+  @Get()
+  async getEmbedDocuments() {
+    const embedders = await this.embedderService.getSources();
+    return embedders;
+  }
 
   @Post()
   @UseInterceptors(FileInterceptor('file'))

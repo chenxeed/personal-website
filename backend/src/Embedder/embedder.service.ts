@@ -271,6 +271,11 @@ export class EmbedderService {
     return result;
   }
 
+  async getSources(): Promise<Source[]> {
+    const sources = await this.sourceModel.find();
+    return sources;
+  }
+
   async getRelevantSources(searchText: string): Promise<string[]> {
     try {
       // Try to connect to the AstraDB for the vector
