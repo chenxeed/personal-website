@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { EmbedderService, EmbeddingType } from './embedder.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller({
   path: 'embedder',
